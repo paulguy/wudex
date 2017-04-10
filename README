@@ -1,0 +1,11 @@
+wudex - Fast, multi-platform WUD extractor
+by paulguy
+ported from VGMToolBox's NintendoWiiUOpticalDisc.cs by snakemeat
+
+USAGE: wudex <WUD filename> <common key> <disc key> [output dir]
+
+Key files are to contain binary AES 128 bit cipher keys (16 bytes).
+If no output dir is specified, files are simply listed.
+
+This program does not include keys, don't ask me where to find keys, 
+they're easy enough to find on your own.
