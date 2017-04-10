@@ -232,7 +232,7 @@ int decrypt_block_special(WiiUEncryptedFile *f, char *buffer, int dataRead, int 
 		}
 	}
 
-	fprintf(stderr, "%d %d %d\n", dataRead, preFileData, i);
+	//fprintf(stderr, "%d %d %d\n", dataRead, preFileData, i);
 	if(preFileData > 0) {
 		actuallyRead = ((i / SPECIAL_BLOCK_SIZE - 1) * SPECIAL_BLOCK_DATA) + (SPECIAL_BLOCK_DATA - preFileData);
 	} else {
@@ -297,21 +297,21 @@ int read_encrypted_block(WiiUEncryptedFile *f, char *buffer) {
 			/* however many blocks fit in to the buffer */
 			readSize = BLOCK_START(f->readSize, SPECIAL_BLOCK_SIZE);
 		}
-		fprintf(stderr, "%d %d\n", f->size, readSize);
+		//fprintf(stderr, "%d %d\n", f->size, readSize);
 		/* in this case, start is just the start of the cluster.  f->clusterOffset + f->offset is the current read position
 		   within the cluster data, excluding headers */
 		/* read whole, aligned blocks */
 		dataRead = read_file_block(f->f, f->buffer, 
 		                           f->start + ((f->clusterOffset + f->offset) / SPECIAL_BLOCK_DATA * SPECIAL_BLOCK_SIZE),
 		                           readSize);
-		fprintf(stderr, "%d\n", dataRead);
+		//fprintf(stderr, "%d\n", dataRead);
 		if(dataRead < readSize) {
 			fprintf(stderr, "Failed to read!\n");
 			return(-1);
 		}
 
 		dataRead = decrypt_block_special(f, buffer, dataRead, preFileData);
-		fprintf(stderr, "%d\n", dataRead);
+		//fprintf(stderr, "%d\n", dataRead);
 		if(dataRead < 1) {
 			fprintf(stderr, "Failed to decrypt special block!\n");
 			return(-1);

@@ -244,7 +244,7 @@ int populate_file_tree(WiiUDisc *w, int part) {
 		p->clusters[i]->flags1 =
 			READ_BE32_FROM_BUFFER(w->fileTableBuffer, FILE_BLOCK_HEADER_SIZE + (CLUSTER_DESCRIPTOR_SIZE * i) + 0x14);
 
-		fprintf(stderr, "%d %lld %lld %08X %08X\n", i, p->clusters[i]->offset, p->clusters[i]->size, p->clusters[i]->flags0, p->clusters[i]->flags1);
+		//fprintf(stderr, "%d %lld %lld %08X %08X\n", i, p->clusters[i]->offset, p->clusters[i]->size, p->clusters[i]->flags0, p->clusters[i]->flags1);
 		
 	}
 
@@ -370,9 +370,9 @@ int populate_file_tree(WiiUDisc *w, int part) {
 			goto error6;
 		}
 		p->dirEnts[i]->name = &w->fileTableBuffer[p->dirEnts[i]->nameOffset];
-		fprintf(stderr, "%d: %s %d %d %d %d %hd %lld %04hX\n", i, p->dirEnts[i]->name, p->dirEnts[i]->type, p->dirEnts[i]->size,
+		/*fprintf(stderr, "%d: %s %d %d %d %d %hd %lld %04hX\n", i, p->dirEnts[i]->name, p->dirEnts[i]->type, p->dirEnts[i]->size,
 				p->dirEnts[i]->nextEntry, p->dirEnts[i]->nameOffset, p->dirEnts[i]->cluster, p->dirEnts[i]->clusterOffset,
-				p->dirEnts[i]->flags);
+				p->dirEnts[i]->flags);*/
 	}
 
 	/* don't free fileTableBuffer, because filenames are referenced from it */
@@ -445,7 +445,7 @@ int populate_file_trees(WiiUDisc *w) {
 							return(-1);
 						}
 
-						fprintf(stderr, "%d\n", f->special);
+						//fprintf(stderr, "%d\n", f->special);
 
 						if(read_encrypted_block(f, ticket) < w->partitions[i]->dirEnts[tikindex]->size) {
 							fprintf(stderr, "Couldn't read ticket!\n");
