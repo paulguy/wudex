@@ -1,4 +1,4 @@
-OBJS   = util.o wiiudisc.o main.o
+OBJS   = multi_file.o util.o wiiudisc.o main.o
 TARGET = wudex
 CFLAGS = -ggdb -D_FILE_OFFSET_BITS=64 -std=gnu99
 LDFLAGS = -lcrypto

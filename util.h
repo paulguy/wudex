@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include "wiiudisc.h"
+#include "multi_file.h"
 
 #include <stdio.h>
 
@@ -19,7 +20,7 @@
 #define OPENSSL_DECRYPT (0)
 
 typedef struct {
-	FILE *f;
+	multi_FILE *f;
 	off_t start;
 	int offset;
 	int size;
@@ -33,8 +34,8 @@ typedef struct {
 	int outOffset;
 } WiiUEncryptedFile;
 
-int read_unterminated_string(FILE *f, const size_t bytes, char *buffer);
-int read_unterminated_string_from(FILE *f, const off_t offset, const size_t bytes, char *buffer);
+int read_unterminated_string(multi_FILE *f, const size_t bytes, char *buffer);
+int read_unterminated_string_from(multi_FILE *f, const off_t offset, const size_t bytes, char *buffer);
 WiiUEncryptedFile *open_encrypted_file(WiiUDisc *w, int partition, int index);
 int read_encrypted_block(WiiUEncryptedFile *f, char *buffer);
 void free_encrypted_file(WiiUEncryptedFile *f);

@@ -1,5 +1,6 @@
 #include "util.h"
 #include "wiiudisc.h"
+#include "multi_file.h"
 
 #include <string.h>
 
@@ -9,8 +10,8 @@
 #define SPECIAL_BLOCK_HEADER (0x400)
 #define SPECIAL_BLOCK_DATA (SPECIAL_BLOCK_SIZE - SPECIAL_BLOCK_HEADER)
 
-int read_unterminated_string(FILE *f, const size_t bytes, char *buffer) {
-	if(fread(buffer, 1, bytes, f) < bytes) {
+int read_unterminated_string(multi_FILE *f, const size_t bytes, char *buffer) {
+	if(multi_fread(buffer, bytes, f) < bytes) {
 		fprintf(stderr, "Failed to read!\n");
 		return(-1);
 	}
@@ -20,8 +21,8 @@ int read_unterminated_string(FILE *f, const size_t bytes, char *buffer) {
 	return(0);
 }
 
-int read_unterminated_string_from(FILE *f, const off_t offset, const size_t bytes, char *buffer) {
-	if(fseeko(f, offset, SEEK_SET) != 0) {
+int read_unterminated_string_from(multi_FILE *f, const off_t offset, const size_t bytes, char *buffer) {
+	if(multi_fseeko(f, offset) != 0) {
 		fprintf(stderr, "Failed to seek!\n");
 		return(-1);
 	}
@@ -29,13 +30,13 @@ int read_unterminated_string_from(FILE *f, const off_t offset, const size_t byte
 	return(read_unterminated_string(f, bytes, buffer));
 }
 
-int read_file_block(FILE *f, char *buffer, off_t offset, size_t size) {
-	if(fseeko(f, offset, SEEK_SET) != 0) {
+int read_file_block(multi_FILE *f, char *buffer, off_t offset, size_t size) {
+	if(multi_fseeko(f, offset) != 0) {
 		fprintf(stderr, "Failed to seek!\n");
 		return(-1);
 	}
 
-	return(fread(buffer, 1, size, f));
+	return(multi_fread(buffer, size, f));
 }
 
 WiiUEncryptedFile *open_encrypted_file(WiiUDisc *w, int partition, int index) {

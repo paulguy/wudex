@@ -1,5 +1,6 @@
 #include "wiiudisc.h"
 #include "util.h"
+#include "multi_file.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -502,7 +503,7 @@ int populate_file_trees(WiiUDisc *w) {
 	return(0);
 }
 
-WiiUDisc *wiiu_read_disc_structure(FILE *in, const char *commonKey, const char *discKey) {
+WiiUDisc *wiiu_read_disc_structure(multi_FILE *in, const char *commonKey, const char *discKey) {
 	WiiUDisc *w;
 	int i;
 

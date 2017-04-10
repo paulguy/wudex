@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -9,15 +10,17 @@
 
 #include "wiiudisc.h"
 #include "util.h"
+#include "multi_file.h"
 
 #define MAX_PATH_DEPTH (16)
+const char WUD_EXTENSION[] = "wud";
 
 int read_key_file(char *keyBuff, char *fileName);
 int make_dir_and_go(const char *name);
 int go_up_dir();
 
 int main(int argc, char **argv) {
-	FILE *wudFile;
+	multi_FILE *wudFile = NULL;
 	FILE *out;
 	char *outDir = NULL;
 	int partitionNum = -1;
@@ -29,28 +32,58 @@ int main(int argc, char **argv) {
 	char *readBuffer = NULL;
 
 	if(argc < 4) {
-		fprintf(stderr, "USAGE: wudex <WUD filename> <common key> <disc key> [output dir]\n");
+		fprintf(stderr, "USAGE: wudex <common key> <disc key> <filename.wud> [<filename.wud> ...] [output dir]\n");
 		goto error0;
 	}
 
-	wudFile = fopen(argv[1], "rb");
-	if(wudFile == NULL) {
-		fprintf(stderr, "Failed to open %s for read!\n", argv[1]);
-		goto error0;
-	}
-
-	if(read_key_file(commonKey, argv[2]) < 0) {
+	if(read_key_file(commonKey, argv[1]) < 0) {
 		fprintf(stderr, "Failed to read common key from file %s!\n", argv[3]);
 		goto error1;
 	}
 
-	if(read_key_file(discKey, argv[3]) < 0) {
+	if(read_key_file(discKey, argv[2]) < 0) {
 		fprintf(stderr, "Failed to read disc key from file %s!\n", argv[4]);
 		goto error1;
 	}
 
-	if(argc > 4) {
-		outDir = argv[4];
+	for(i = 3; i < argc; i++) {
+		int fileNameLen;
+		char *dot;
+		int ext;
+		char extension[3];
+		
+		/* extract the file extension, if it exists and is 3 characters */
+		fileNameLen = strlen(argv[i]);
+		dot = strrchr(argv[i], '.');
+		if(dot == NULL) {
+			break;
+		}
+		ext = dot - argv[i]; /* relative to the string */
+		ext++; /* first char after the dot */
+		if(fileNameLen - ext != 3) {
+			break;
+		}
+		memcpy(extension, &argv[i][ext], 3);
+		/* convert to lowercase */
+		for(j = 0; j < 3; j++) {
+			extension[j] = tolower(extension[j]);
+		}
+		/* compare with "wud" */
+		if(memcmp(extension, WUD_EXTENSION, 3) != 0) {
+			break;
+		}
+		/* open it */
+		wudFile = multi_fopen(wudFile, argv[i]);
+		if(wudFile == NULL) {
+			fprintf(stderr, "Failed to open %s!\n", argv[i]);
+		}
+	}
+	if(wudFile == NULL) {
+		fprintf(stderr, "No WUD files given.\n");
+		goto error0;
+	}
+	if(i < argc) {
+		outDir = argv[i];
 	}
 
 	w = wiiu_read_disc_structure(wudFile, commonKey, discKey);
@@ -197,7 +230,7 @@ int main(int argc, char **argv) {
 	if(readBuffer != NULL)
 		free(readBuffer);
 	free_wiiu_disc(w);
-	fclose(wudFile);
+	multi_fclose(wudFile);
 	exit(EXIT_SUCCESS);
 
 error3:
@@ -206,7 +239,7 @@ error3:
 error2:
 	free_wiiu_disc(w);
 error1:
-	fclose(wudFile);
+	multi_fclose(wudFile);
 error0:
 	exit(EXIT_FAILURE);
 }

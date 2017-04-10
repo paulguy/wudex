@@ -1,7 +1,7 @@
 #ifndef WIIUDISC_H
 #define WIIUDISC_H
 
-#include <stdio.h>
+#include "multi_file.h"
 #include <openssl/evp.h>
 
 #define BLOCKSIZE (0x8000)
@@ -73,7 +73,7 @@ typedef struct {
 } WiiUPartition;
 
 typedef struct {
-	FILE *f;
+	multi_FILE *f;
 	char commonKey[KEYSIZE];
 	char discKey[KEYSIZE];
 	char serial[SERIALSIZE + 1];
@@ -88,7 +88,7 @@ typedef struct {
 	WiiUPartition **partitions;
 } WiiUDisc;
 
-WiiUDisc *wiiu_read_disc_structure(FILE *in, const char *commonKey, const char *discKey);
+WiiUDisc *wiiu_read_disc_structure(multi_FILE *in, const char *commonKey, const char *discKey);
 void free_wiiu_disc(WiiUDisc *w);
 
 #endif
