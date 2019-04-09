@@ -39,7 +39,7 @@ int read_unterminated_string_from(multi_FILE *f, const off_t offset, const size_
 WiiUEncryptedFile *open_encrypted_file(WiiUDisc *w, int partition, int index);
 int read_encrypted_block(WiiUEncryptedFile *f, char *buffer);
 void free_encrypted_file(WiiUEncryptedFile *f);
-int crypt(const unsigned char const *in, unsigned char *out, 
+int crypt_aes_128_cbc(const unsigned char const *in, unsigned char *out, 
           const unsigned int datalen, const unsigned char const *key,
           const unsigned char const *iv, const int enc);
 int find_index_of_file_by_name(const WiiUPartition *p, int start, const char *name);

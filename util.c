@@ -113,7 +113,7 @@ WiiUEncryptedFile *open_encrypted_file(WiiUDisc *w, int partition, int index) {
 int decrypt_block(WiiUEncryptedFile *f, char *buffer, int dataRead) {
 	int totalout, outl;
 
-	if(crypt(f->buffer, buffer, dataRead, f->key, f->IV, OPENSSL_DECRYPT) < 0) {
+	if(crypt_aes_128_cbc(f->buffer, buffer, dataRead, f->key, f->IV, OPENSSL_DECRYPT) < 0) {
 		fprintf(stderr, "Failed to decrypt block!\n");
 		return(-1);
 	}
@@ -209,7 +209,7 @@ int decrypt_block_special(WiiUEncryptedFile *f, char *buffer, int dataRead, int 
 		//fprintf(stderr, "%lld %d %d %d\n", clusterOffset, outOffset, outSize, outBuffOffset);
 
 		/* decrypt header */
-		if(crypt(&f->buffer[i], &buffer[outBuffOffset], SPECIAL_BLOCK_HEADER, f->key, f->IV, OPENSSL_DECRYPT) < 0) {
+		if(crypt_aes_128_cbc(&f->buffer[i], &buffer[outBuffOffset], SPECIAL_BLOCK_HEADER, f->key, f->IV, OPENSSL_DECRYPT) < 0) {
 			fprintf(stderr, "Failed to decrypt block!\n");
 			return(-1);
 		}
@@ -224,7 +224,7 @@ int decrypt_block_special(WiiUEncryptedFile *f, char *buffer, int dataRead, int 
 		memcpy(origSHA1, &buffer[outBuffOffset + (ivnum * 0x14)], sizeof(origSHA1));
 
 		/* decrypt the rest */
-		if(crypt(&f->buffer[i + SPECIAL_BLOCK_HEADER], &buffer[outBuffOffset], SPECIAL_BLOCK_DATA,
+		if(crypt_aes_128_cbc(&f->buffer[i + SPECIAL_BLOCK_HEADER], &buffer[outBuffOffset], SPECIAL_BLOCK_DATA,
 				 f->key, IV, OPENSSL_DECRYPT) < 0) {
 			fprintf(stderr, "Failed to decrypt block!\n");
 			return(-1);
@@ -348,7 +348,7 @@ void free_encrypted_file(WiiUEncryptedFile *r) {
 	free(r);
 }
 
-int crypt(const unsigned char const *in, unsigned char *out, 
+int crypt_aes_128_cbc(const unsigned char const *in, unsigned char *out, 
           const unsigned int datalen, const unsigned char const *key,
           const unsigned char const *iv, const int enc) {
 #if OPENSSL_VERSION_NUMBER < NEWER_OPENSSL_VERSION

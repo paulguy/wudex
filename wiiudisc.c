@@ -471,7 +471,7 @@ int populate_file_trees(WiiUDisc *w) {
 						titleID = &ticket[0x1DC];
 						bzero(IV, KEYSIZE);
 						memcpy(IV, titleID, 8);
-						if(crypt(encKey, w->partitions[partitionKey]->key, KEYSIZE, w->commonKey, IV, OPENSSL_DECRYPT) != 0) {
+						if(crypt_aes_128_cbc(encKey, w->partitions[partitionKey]->key, KEYSIZE, w->commonKey, IV, OPENSSL_DECRYPT) != 0) {
 							fprintf(stderr, "Failed to decrypt partition key for %d!\n", partitionKey);
 							return(-1);
 						}
