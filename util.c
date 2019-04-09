@@ -4,6 +4,8 @@
 
 #include <string.h>
 
+#define NEWER_OPENSSL_VERSION 0x10100000
+
 #define FILE_READ_SIZE (1024 * 1024)
 
 #define SPECIAL_BLOCK_SIZE (0x10000)
@@ -109,7 +111,6 @@ WiiUEncryptedFile *open_encrypted_file(WiiUDisc *w, int partition, int index) {
 }
 
 int decrypt_block(WiiUEncryptedFile *f, char *buffer, int dataRead) {
-	EVP_CIPHER_CTX c;
 	int totalout, outl;
 
 	if(crypt(f->buffer, buffer, dataRead, f->key, f->IV, OPENSSL_DECRYPT) < 0) {
@@ -124,37 +125,56 @@ int decrypt_block(WiiUEncryptedFile *f, char *buffer, int dataRead) {
 }
 
 int sha1_digest(char *buffer, int size, char *digest) {
+#if OPENSSL_VERSION_NUMBER < NEWER_OPENSSL_VERSION
 	EVP_MD_CTX c;
+#define MDCTX (&c)
+#else
+	EVP_MD_CTX *c;
+#define MDCTX (c)
+#endif
 	int len;
 	
+#if OPENSSL_VERSION_NUMBER < NEWER_OPENSSL_VERSION
 	EVP_MD_CTX_init(&c);
+#else
+    c = EVP_MD_CTX_new();
+#endif
 	
-	if(EVP_DigestInit_ex(&c, EVP_sha1(), NULL) == 0) {
+	if(EVP_DigestInit_ex(MDCTX, EVP_sha1(), NULL) == 0) {
 		fprintf(stderr, "Failed to initialize SHA1 digest!\n");
-		EVP_MD_CTX_cleanup(&c);
-		return(-1);
+        goto error;
 	}
 
-	if(EVP_DigestUpdate(&c, buffer, size) == 0) {
+	if(EVP_DigestUpdate(MDCTX, buffer, size) == 0) {
 		fprintf(stderr, "Failed to digest data!\n");
-		EVP_MD_CTX_cleanup(&c);
-		return(-1);
+        goto error;
 	}
 
-	if(EVP_DigestFinal_ex(&c, digest, &len) == 0) {
+	if(EVP_DigestFinal_ex(MDCTX, digest, &len) == 0) {
 		fprintf(stderr, "Failed to get digest!\n");
-		EVP_MD_CTX_cleanup(&c);
-		return(-1);
+        goto error;
 	}
 
+#if OPENSSL_VERSION_NUMBER < NEWER_OPENSSL_VERSION
 	EVP_MD_CTX_cleanup(&c);
+#else
+    EVP_MD_CTX_free(c);
+#endif
 
 	return(0);
+
+error:
+#if OPENSSL_VERSION_NUMBER < NEWER_OPENSSL_VERSION
+	EVP_MD_CTX_cleanup(&c);
+#else
+    EVP_MD_CTX_free(c);
+#endif
+    return(-1);
+#undef MDCTX
 }
 
 int decrypt_block_special(WiiUEncryptedFile *f, char *buffer, int dataRead, int preFileData) {
 	int i;
-	EVP_CIPHER_CTX c;
 	int totalout, outl;
 	int ivnum;
 	char IV[16];
@@ -331,47 +351,67 @@ void free_encrypted_file(WiiUEncryptedFile *r) {
 int crypt(const unsigned char const *in, unsigned char *out, 
           const unsigned int datalen, const unsigned char const *key,
           const unsigned char const *iv, const int enc) {
+#if OPENSSL_VERSION_NUMBER < NEWER_OPENSSL_VERSION
 	EVP_CIPHER_CTX c;
+#define CIPHERCTX (&c)
+#else
+	EVP_CIPHER_CTX *c;
+#define CIPHERCTX (c)
+#endif
 	unsigned int outl;
 	unsigned int totalout;
 
 	if(enc != 0 && enc != 1) {
 		fprintf(stderr, "enc must be 0 (decrypt) or 1 (encrypt)!\n");
-		return(-1);
+
 	}
 
+#if OPENSSL_VERSION_NUMBER < NEWER_OPENSSL_VERSION
 	EVP_CIPHER_CTX_init(&c);
+#else
+    c = EVP_CIPHER_CTX_new();
+#endif
 
-	if(EVP_CipherInit_ex(&c, EVP_aes_128_cbc(), NULL, key, iv, enc) == 0) {
-		EVP_CIPHER_CTX_cleanup(&c);
+	if(EVP_CipherInit_ex(CIPHERCTX, EVP_aes_128_cbc(), NULL, key, iv, enc) == 0) {
 		fprintf(stderr, "Failed to initialize AES cipher!\n");
-		return(-1);
+        goto error1;
 	}
-	EVP_CIPHER_CTX_set_padding(&c, 0);
+	EVP_CIPHER_CTX_set_padding(CIPHERCTX, 0);
 
-	if(EVP_CipherUpdate(&c, out, &outl, in, datalen) == 0) {
-		EVP_CIPHER_CTX_cleanup(&c);
+	if(EVP_CipherUpdate(CIPHERCTX, out, &outl, in, datalen) == 0) {
 		fprintf(stderr, "Failed to en/decrypt data!\n");
-		return(-1);
+        goto error1;
 	}
 	totalout = outl;
 
-	if(EVP_CipherFinal_ex(&c, out, &outl) == 0) {
-		EVP_CIPHER_CTX_cleanup(&c);
+	if(EVP_CipherFinal_ex(CIPHERCTX, out, &outl) == 0) {
 		fprintf(stderr, "Failed to en/decrypt final data!\n");
-		return(-1);
+        goto error1;
 	}
 	totalout += outl;
 
 	if(totalout != datalen) {
-		EVP_CIPHER_CTX_cleanup(&c);
 		fprintf(stderr, "Different data length returned! %d %d\n", datalen, totalout);
-		return(-1);
+        goto error1;
 	}
 
+#if OPENSSL_VERSION_NUMBER < NEWER_OPENSSL_VERSION
 	EVP_CIPHER_CTX_cleanup(&c);
+#else
+    EVP_CIPHER_CTX_free(c);
+#endif
 
 	return(0);
+
+error1:
+#if OPENSSL_VERSION_NUMBER < NEWER_OPENSSL_VERSION
+	EVP_CIPHER_CTX_cleanup(&c);
+#else
+    EVP_CIPHER_CTX_free(c);
+#endif
+error0:
+    return(-1);
+#undef CIPHERCTX
 }
 
 int find_index_of_file_by_name(const WiiUPartition *p, int start, const char *name) {
